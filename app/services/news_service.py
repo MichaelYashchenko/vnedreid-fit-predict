@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 from tinkoff.invest import AsyncClient, CandleInterval
 from tinkoff.invest.constants import INVEST_GRPC_API
 from tinkoff.invest.schemas import PortfolioPosition, InstrumentIdType
+from ml_models.news_dedupl import deduplicate_news
+from ml_models.news_relevance import get_news_relevance
+from ml_models.news_ner import ner_news
 from tinkoff.invest.utils import quotation_to_decimal
 from app.services.schemas import Ticker
 
@@ -118,7 +121,6 @@ class NewsService:
         for x in keywords_list:
             new_kw.append("(" + x + ")")
         res = " OR ".join(new_kw)
-        print(res)
         return res
 
     def _build_get_url(self, query_params: dict) -> str:
@@ -146,7 +148,6 @@ class NewsService:
         }
 
         url = self._build_get_url(query_params)
-        print(url)
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -155,13 +156,14 @@ class NewsService:
             return {"error": str(e), "url": url}
 
 
-    async def fetch_ticker_news(self, ticker, from_date, to_date, source_type: str = ""):
+    async def fetch_ticker_news(self, ticker, from_date, to_date):
         companies = await get_companies_names_by_ticker([ticker])
         kws = get_key_words(companies)
         name = companies[0]
         kws_list = kws[name]
         kws_list.append(name)
-        print(kws_list)
         news = self.get_news(kws_list, from_date=from_date, to_date=to_date)
-        print("news: ", news, sep='\t')
-        return news
+        unique_news = deduplicate_news(news)
+        with_relevance = get_news_relevance(unique_news)
+        nered_news = ner_news(with_relevance)
+        return nered_news

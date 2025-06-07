@@ -14,7 +14,10 @@ class Article(BaseModel):
     image: HttpUrl
     publishedAt: datetime
     source: Source
+    duplicates_removed: int
+    sentiment: str
+    score: float
+    key_words: list[str]
 
 class NewsResponse(BaseModel):
-    totalArticles: int
     articles: List[Article]
