@@ -7,7 +7,7 @@ from typing import List, Optional
 from typing import Set
 from dotenv import load_dotenv
 from ml_models.gpt_client import get_key_words
-from tinkoff.invest import Client
+from tinkoff.invest import AsyncClient
 from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX, INVEST_GRPC_API
 from tinkoff.invest.schemas import PortfolioPosition, InstrumentIdType
 from ml_models.news_dedupl import NewsDeduplicator, transformer_embed
@@ -23,9 +23,9 @@ TOKEN = os.getenv('TOKEN')
 
 async def get_companies_names_by_ticker(tickers, token = TOKEN, regime=INVEST_GRPC_API):
     companies_names = list()
-    async with Client(TOKEN, target=INVEST_GRPC_API) as client:
+    async with AsyncClient(TOKEN, target=INVEST_GRPC_API) as client:
         for ticker in tickers:
-            response = client.instruments.get_instrument_by(
+            response = await client.instruments.get_instrument_by(
                 id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
                 class_code='TQBR', # класс или рынок, к которому относится финансовый инструмент
                 id=ticker
@@ -34,12 +34,12 @@ async def get_companies_names_by_ticker(tickers, token = TOKEN, regime=INVEST_GR
             companies_names.append(instrument.name)
     return companies_names
 
-def get_stocks_info(token, regime=INVEST_GRPC_API) -> Set[PortfolioPosition]:
+async def get_stocks_info(token, regime=INVEST_GRPC_API) -> Set[PortfolioPosition]:
     user_stocks = set()
-    with Client(token, target=regime) as client:
+    async with AsyncClient(token, target=regime) as client:
         accounts = client.users.get_accounts().accounts
         for account in accounts:
-            portfolio = client.operations.get_portfolio(account_id=account.id)
+            portfolio = await client.operations.get_portfolio(account_id=account.id)
             stocks = [
                 position for position in portfolio.positions
                 if position.instrument_type == "share"  # фильтруем только акции
