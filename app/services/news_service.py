@@ -84,7 +84,6 @@ class NewsService:
         for x in keywords_list:
             new_kw.append("(" + x + ")")
         res = " OR ".join(new_kw)
-        print(res)
         return res
 
     def _build_get_url(self, query_params: dict) -> str:
@@ -112,7 +111,6 @@ class NewsService:
         }
 
         url = self._build_get_url(query_params)
-        print(url)
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -127,12 +125,10 @@ class NewsService:
         name = companies[0]
         kws_list = kws[name]
         kws_list.append(name)
-        print(kws_list)
         news = self.get_news(kws_list, from_date=from_date, to_date=to_date)
         unique_news = deduplicate_news(news)
         with_relevance = get_news_relevance(unique_news)
         nered_news = ner_news(with_relevance)
-        print("nered_news: ", nered_news, sep='\t')
         return nered_news
 
 
