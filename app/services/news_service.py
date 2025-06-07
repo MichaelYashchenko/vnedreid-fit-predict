@@ -10,7 +10,9 @@ from ml_models.gpt_client import get_key_words
 from tinkoff.invest import Client
 from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX, INVEST_GRPC_API
 from tinkoff.invest.schemas import PortfolioPosition, InstrumentIdType
-from ml_models.news_dedupl import NewsDeduplicator, transformer_embed
+from ml_models.news_dedupl import deduplicate_news
+from ml_models.news_relevance import get_news_relevance
+from ml_models.news_ner import ner_news
 import torch
 #
 # dedup = NewsDeduplicator(embedding_fn=transformer_embed, similarity_threshold=0.7)
@@ -127,8 +129,11 @@ class NewsService:
         kws_list.append(name)
         print(kws_list)
         news = self.get_news(kws_list, from_date=from_date, to_date=to_date)
-        print("news: ", news, sep='\t')
-        return news
+        unique_news = deduplicate_news(news)
+        with_relevance = get_news_relevance(unique_news)
+        nered_news = ner_news(with_relevance)
+        print("nered_news: ", nered_news, sep='\t')
+        return nered_news
 
 
 

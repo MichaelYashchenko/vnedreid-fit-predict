@@ -1,71 +1,60 @@
-from typing import Callable, List, Dict
+from typing import List, Dict
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from natasha import Segmenter, NewsEmbedding, NewsMorphTagger, NewsSyntaxParser, Doc
-import numpy as np
 from transformers import AutoTokenizer, AutoModel
 import torch
 
-class NewsDeduplicator:
-    def __init__(self, embedding_fn: Callable[[str], np.ndarray], similarity_threshold: float = 0.85):
-        """
-        :param embedding_fn: Функция, возвращающая вектор np.ndarray по тексту.
-        :param similarity_threshold: Порог для определения дубликатов.
-        """
-        self.embedding_fn = embedding_fn
+class NewsDeduplicatorFast:
+    def __init__(self, tokenizer, model, similarity_threshold: float = 0.85, device=None):
         self.similarity_threshold = similarity_threshold
-    def _are_similar(self, text1: str, text2: str) -> bool:
-        vec1 = self.embedding_fn(text1).reshape(1, -1)
-        vec2 = self.embedding_fn(text2).reshape(1, -1)
-        sim = cosine_similarity(vec1, vec2)[0][0]
-        return sim >= self.similarity_threshold
+        self.tokenizer = tokenizer
+        self.model = model
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+        self.model.eval()
+
+    def embed_batch(self, texts: List[str]) -> np.ndarray:
+        inputs = self.tokenizer(
+            texts, return_tensors="pt", padding=True, truncation=True, max_length=512
+        ).to(self.device)
+
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+        embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
+        return embeddings
+
     def deduplicate(self, items: List[Dict]) -> List[Dict]:
-        """
-        :param items: Список словарей с ключом 'description' и другими полями
-        :return: Список словарей с уникальными описаниями и числом удалённых дубликатов
-        """
+        descriptions = [item['description'] for item in items]
+        embeddings = self.embed_batch(descriptions)
+
+        similarity_matrix = cosine_similarity(embeddings)
+        n = len(items)
+        used = [False] * n
         result = []
-        items = items['articles']
-        used = [False] * len(items)
-        for i, item_i in enumerate(items):
+
+        for i in range(n):
             if used[i]:
                 continue
-            group = [item_i]
+            group = [i]
             used[i] = True
-
-            for j in range(i + 1, len(items)):
-                if used[j]:
-                    continue
-                print(items)
-                item_j = items[j]
-                if self._are_similar(item_i['description'], item_j['description']):
+            for j in range(i + 1, n):
+                if not used[j] and similarity_matrix[i, j] >= self.similarity_threshold:
+                    group.append(j)
                     used[j] = True
-                    group.append(item_j)
-            best_item = max(group, key=lambda x: len(x['description']))
-            cleaned_item = best_item.copy()
-            cleaned_item['duplicates_removed'] = len(group) - 1
-            result.append(cleaned_item)
+
+            best_idx = max(group, key=lambda idx: len(items[idx]['description']))
+            item = items[best_idx].copy()
+            item['duplicates_removed'] = len(group) - 1
+            result.append(item)
+
         return result
-    @staticmethod
-    def transformer_embed(text: str) -> np.ndarray:
-        tokenizer = AutoTokenizer.from_pretrained("cointegrated/rubert-tiny")
-        model = AutoModel.from_pretrained("cointegrated/rubert-tiny")
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = model(**inputs)
-        return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-tokenizer = AutoTokenizer.from_pretrained("cointegrated/rubert-tiny")
-model = AutoModel.from_pretrained("cointegrated/rubert-tiny")
 
-def transformer_embed(text: str) -> np.ndarray:
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    # Усреднение по токенам
-    return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+from transformers import AutoTokenizer, AutoModel
 
-# from dedupl_class import NewsDeduplicator, transformer_embed
-# import torch
-#
-# dedup = NewsDeduplicator(embedding_fn=transformer_embed, similarity_threshold=0.7)
-# deduped_news = dedup.deduplicate(news)
+def deduplicate_news(news):
+    news = news['articles']
+    tokenizer = AutoTokenizer.from_pretrained("cointegrated/rubert-tiny")
+    model = AutoModel.from_pretrained("cointegrated/rubert-tiny")
+    deduplicator = NewsDeduplicatorFast(tokenizer=tokenizer, model=model)
+    unique_news = deduplicator.deduplicate(news)
+    return unique_news
