@@ -12,6 +12,6 @@ sentiment_pipeline = pipeline(
 def get_news_relevance(news):
     for new_i in range(0, len(news)):
         result = sentiment_pipeline(news[new_i]['description'])
-        news[new_i]['sentiment'] = result[0]['label']
-        news[new_i]['score'] = result[0]['score']
+        news[new_i]['news_sentiment'] = result[0]['label']
+        news[new_i]['news_sentiment_score'] = result[0]['score']
     return news

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import news_router# , portfolio_router
 import uvicorn
 # from app.models.database import engine, Base
@@ -12,6 +13,14 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # # Base.metadata.create_all(bind=engine)
 #
 app = FastAPI(docs_url="/", title="News Aggregator Service")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 #
 app.include_router(news_router.router, prefix="/news", tags=["news"])
 # app.include_router(portfolio_router.router, prefix="/portfolio", tags=["portfolio"])

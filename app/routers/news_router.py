@@ -25,11 +25,12 @@ news_service = NewsService(NEWS_API_KEY)
 
 @router.get("/get_ticker_news", response_model=List[Article])
 async def get_ticker_news(
-    ticker: str,
+    tickers: str,
     date_start: datetime,
     date_end: datetime,
 ):
-    return await news_service.fetch_ticker_news(ticker, date_start, date_end)
+    tickers = tickers.split(',')
+    return await news_service.fetch_ticker_news(tickers, date_start, date_end)
 
 
 @router.get("/get_ticker_prices", response_model=List[Tuple[datetime, float]])

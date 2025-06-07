@@ -44,7 +44,7 @@ class NewsDeduplicatorFast:
 
             best_idx = max(group, key=lambda idx: len(items[idx]['description']))
             item = items[best_idx].copy()
-            item['duplicates_removed'] = len(group) - 1
+            item['duplicates'] = len(group) - 1
             result.append(item)
 
         return result

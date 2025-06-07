@@ -7,17 +7,17 @@ class Source(BaseModel):
     url: HttpUrl
 
 class Article(BaseModel):
-    title: str
-    description: str
+    news_title: str
+    news_summary: str
     content: str
     url: HttpUrl
     image: HttpUrl
     publishedAt: datetime
-    source: Source
-    duplicates_removed: int
-    sentiment: str
-    score: float
-    key_words: list[str]
+    source: str
+    duplicates: int
+    news_sentiment: str
+    news_sentiment_score: float
+    news_tags: list[str]
 
 class NewsResponse(BaseModel):
     articles: List[Article]

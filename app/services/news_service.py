@@ -151,13 +151,18 @@ class NewsService:
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+                data['news_date'] = data['publishedAt']
+                data['news_summary'] = data['description']
+                del data['publishedAt']
+                del data['description']
+                data['source'] = data['source']['name']
                 return data
         except Exception as e:
             return {"error": str(e), "url": url}
 
 
-    async def fetch_ticker_news(self, ticker, from_date, to_date):
-        companies = await get_companies_names_by_ticker([ticker])
+    async def fetch_ticker_news(self, tickers, from_date, to_date):
+        companies = await get_companies_names_by_ticker(tickers)
         kws = get_key_words(companies)
         name = companies[0]
         kws_list = kws[name]
