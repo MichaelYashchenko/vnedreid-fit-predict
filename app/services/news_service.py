@@ -156,7 +156,7 @@ class NewsService:
             return {"error": str(e), "url": url}
 
 
-    async def fetch_ticker_news(self, ticker, from_date, to_date, source_type: str = ""):
+    async def fetch_ticker_news(self, ticker, from_date, to_date):
         companies = await get_companies_names_by_ticker([ticker])
         kws = get_key_words(companies)
         name = companies[0]
