@@ -11,7 +11,7 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # # Инициализация базы (создание таблиц, если нужно)
 # # Base.metadata.create_all(bind=engine)
 #
-app = FastAPI(title="News Aggregator Service")
+app = FastAPI(docs_url="/", title="News Aggregator Service")
 #
 app.include_router(news_router.router, prefix="/news", tags=["news"])
 # app.include_router(portfolio_router.router, prefix="/portfolio", tags=["portfolio"])

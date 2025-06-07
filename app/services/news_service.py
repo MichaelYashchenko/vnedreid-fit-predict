@@ -1,22 +1,22 @@
 import json
 import os
 import urllib.request
-from urllib.parse import urlencode
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from typing import Set
+from urllib.parse import urlencode
+
 from dotenv import load_dotenv
-from ml_models.gpt_client import get_key_words
-from tinkoff.invest import AsyncClient
-from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX, INVEST_GRPC_API
+from tinkoff.invest import AsyncClient, CandleInterval
+from tinkoff.invest.constants import INVEST_GRPC_API
 from tinkoff.invest.schemas import PortfolioPosition, InstrumentIdType
 from ml_models.news_dedupl import deduplicate_news
 from ml_models.news_relevance import get_news_relevance
 from ml_models.news_ner import ner_news
-import torch
-#
-# dedup = NewsDeduplicator(embedding_fn=transformer_embed, similarity_threshold=0.7)
-# deduped_news = dedup.deduplicate(news)
+from tinkoff.invest.utils import quotation_to_decimal
+from app.services.schemas import Ticker
+
+from ml_models.gpt_client import get_key_words
 
 load_dotenv("../.env")
 
@@ -36,11 +36,11 @@ async def get_companies_names_by_ticker(tickers, token = TOKEN, regime=INVEST_GR
             companies_names.append(instrument.name)
     return companies_names
 
-async def get_stocks_info(token, regime=INVEST_GRPC_API) -> Set[PortfolioPosition]:
+async def get_stocks_info(token=TOKEN, regime=INVEST_GRPC_API) -> Set[PortfolioPosition]:
     user_stocks = set()
     async with AsyncClient(token, target=regime) as client:
-        accounts = client.users.get_accounts().accounts
-        for account in accounts:
+        accounts = await client.users.get_accounts()
+        for account in accounts.accounts:
             portfolio = await client.operations.get_portfolio(account_id=account.id)
             stocks = [
                 position for position in portfolio.positions
@@ -50,6 +50,42 @@ async def get_stocks_info(token, regime=INVEST_GRPC_API) -> Set[PortfolioPositio
                 user_stocks.add(stock)
     return user_stocks
 
+
+async def get_user_pf(token):
+    user_stocks = await get_stocks_info(token)
+    tickers = [stock.ticker for stock in user_stocks]
+    companies_names = await get_companies_names_by_ticker(tickers)
+    return [
+        Ticker(ticker=ticker, company_name=company)
+        for ticker, company in zip(tickers, companies_names)
+    ]
+
+
+def quotation_to_float(quotation):
+    return round(float(quotation_to_decimal(quotation)), 2)
+
+
+async def get_ticker_prices(ticker, start_time, end_time, token=TOKEN, regime=INVEST_GRPC_API):
+    candles = []
+    async with AsyncClient(token, target=regime) as client:
+        instrument_response = await client.instruments.get_instrument_by(
+            id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
+            class_code='TQBR',  # Main trading mode for stocks
+            id=ticker
+        )
+        instrument_figi = instrument_response.instrument.figi
+        async for candle in client.get_all_candles(
+            figi=instrument_figi,
+            from_=start_time,
+            to=end_time,
+            interval=CandleInterval.CANDLE_INTERVAL_DAY
+        ):
+            candles.append(candle)
+        if not candles:
+            return [[]]
+    times = [candle.time for candle in candles]
+    prices = [quotation_to_float(candle.close) for candle in candles]
+    return list(zip(times, prices))
 
 
 class NewsService:
@@ -79,7 +115,8 @@ class NewsService:
         dt = dt.replace(tzinfo=self.timezone)
         return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    def _join_keywords(self, keywords_list: List[str]) -> str:
+    @staticmethod
+    def _join_keywords(keywords_list: List[str]) -> str:
         new_kw = []
         for x in keywords_list:
             new_kw.append("(" + x + ")")
@@ -130,13 +167,3 @@ class NewsService:
         with_relevance = get_news_relevance(unique_news)
         nered_news = ner_news(with_relevance)
         return nered_news
-
-
-
-
-
-
-
-
-
-

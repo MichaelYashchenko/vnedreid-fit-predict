@@ -1,14 +1,19 @@
 # app/routers/news_router.py
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Tuple
 
 from dotenv import load_dotenv
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.services.news_service import NewsService
-from app.services.schemas.NewsResponse import Article
+from app.services.schemas.news_response import Article
 from typing import List
+from app.services.news_service import (
+    NewsService,
+    get_ticker_prices as get_tp,
+    get_user_pf
+)
+from app.services.schemas import NewsResponse, Ticker, InvestmentToken
 
 load_dotenv('../.env')
 
@@ -23,7 +28,20 @@ async def get_ticker_news(
     ticker: str,
     date_start: datetime,
     date_end: datetime,
-    source_type: Optional[str] = None,
-    # db: Session = Depends(get_db)
+    source_type: Optional[str] = None
 ):
     return await news_service.fetch_ticker_news(ticker, date_start, date_end, source_type)
+
+
+@router.get("/get_ticker_prices", response_model=List[Tuple[datetime, float]])
+async def get_ticker_prices(
+        ticker: str,
+        date_start: datetime,
+        date_end: datetime
+):
+    return await get_tp(ticker, date_start, date_end)
+
+
+@router.get("/get_user_portfolio", response_model=List[Ticker])
+async def get_user_portfolio(token: InvestmentToken = Depends()):
+    return await get_user_pf(token.token)
