@@ -1,0 +1,1 @@
+from app.services.schemas.NewsResponse import NewsResponse
