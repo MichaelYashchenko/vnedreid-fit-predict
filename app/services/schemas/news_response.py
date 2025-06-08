@@ -25,3 +25,6 @@ class Article(BaseModel):
 
 class NewsResponse(BaseModel):
     articles: List[Article]
+
+class Interpretation(BaseModel):
+    interpretation: str 

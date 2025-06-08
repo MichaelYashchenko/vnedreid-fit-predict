@@ -16,7 +16,7 @@ from ml_models.news_ner import ner_news
 from tinkoff.invest.utils import quotation_to_decimal
 from app.services.schemas import Ticker
 
-from ml_models.gpt_client import get_key_words
+from ml_models.gpt_client import get_key_words, get_interpretation as gpt_interp
 
 load_dotenv("../.env")
 
@@ -49,6 +49,15 @@ async def get_stocks_info(token=TOKEN, regime=INVEST_GRPC_API) -> Set[PortfolioP
             for stock in stocks:
                 user_stocks.add(stock)
     return user_stocks
+
+async def get_interpretation(
+    news_text: str,
+    sentiment: str,
+    sentiment_score: float,
+    ticker: str
+):
+    interpetation_text = await gpt_interp(news_text, sentiment, sentiment_score, ticker)
+    return {'interpretation' : interpetation_text}
 
 
 async def get_user_pf(token):
@@ -169,7 +178,7 @@ class NewsService:
         dict_ticker_kws = dict() # { "GAZP" : ["Газпром", "газ", "природные ресурсы", ... ], "SBER": [ "Герман Греф", "Сбер-тех", "Гигачад"}
         for ticker in tickers:
             companies = await get_companies_names_by_ticker([ticker])#await get_companies_names_by_ticker(tickers)
-            kws = get_key_words(companies)
+            kws = await get_key_words(companies)
             name = companies[0]
             kws_list = kws[name]
             kws_list.append(name)
@@ -180,6 +189,7 @@ class NewsService:
         with_relevance = get_news_relevance(unique_news)
         nered_news = ner_news(with_relevance)
         return nered_news
+    
 
 
 def preprocess_articles(ticker, articles_list):
