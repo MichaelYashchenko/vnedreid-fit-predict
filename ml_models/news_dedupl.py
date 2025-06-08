@@ -24,7 +24,6 @@ class NewsDeduplicatorFast:
         return embeddings
 
     def deduplicate(self, items: List[Dict]) -> List[Dict]:
-        print(items)
         descriptions = [item['news_summary'] for item in items]
         embeddings = self.embed_batch(descriptions)
 

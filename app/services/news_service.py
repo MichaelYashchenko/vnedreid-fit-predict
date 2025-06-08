@@ -136,7 +136,7 @@ class NewsService:
         from_date: Optional[datetime] = None,
         to_date: Optional[datetime] = None,
         max_results: Optional[int] = None
-    ) -> dict:
+    ):
         query_params = {
             "q": self._join_keywords(keywords),
             "category": category or self.default_category,
@@ -157,7 +157,7 @@ class NewsService:
                 articles = preprocess_articles(ticker, articles)
                 return articles
         except Exception as e:
-            return {"error": str(e), "url": url}
+            return []
     def get_news_batch(self, dict_ticker_kws, from_date, to_date):
         result_news = []
         for ticker, kws in dict_ticker_kws.items():
@@ -167,7 +167,6 @@ class NewsService:
 
     async def fetch_ticker_news(self, tickers, from_date, to_date):
         dict_ticker_kws = dict() # { "GAZP" : ["Газпром", "газ", "природные ресурсы", ... ], "SBER": [ "Герман Греф", "Сбер-тех", "Гигачад"}
-        print(tickers)
         for ticker in tickers:
             companies = await get_companies_names_by_ticker([ticker])#await get_companies_names_by_ticker(tickers)
             kws = get_key_words(companies)
