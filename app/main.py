@@ -4,6 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import news_router# , portfolio_router
 import uvicorn
+import redis
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache import FastAPICache
 # from app.models.database import engine, Base
 env_file_path = "../.env"
 load_dotenv(env_file_path)
@@ -13,6 +16,10 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # # Base.metadata.create_all(bind=engine)
 #
 app = FastAPI(docs_url="/", title="News Aggregator Service")
+
+# Configure Redis (optional)
+redis_client = redis.Redis(host="localhost", port=6379, db=0)
+FastAPICache.init(RedisBackend(redis_client), prefix="cache")
 
 app.add_middleware(
     CORSMiddleware,
