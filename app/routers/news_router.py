@@ -7,12 +7,13 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends
 from fastapi_cache.decorator import cache
 
-from app.services.schemas.news_response import Article
+from app.services.schemas.news_response import Article, Interpretation
 from typing import List
 from app.services.news_service import (
     NewsService,
     get_ticker_prices as get_tp,
-    get_user_pf
+    get_user_pf,
+    get_interpretation as get_interp
 )
 from app.services.schemas import NewsResponse, Ticker, InvestmentToken
 
@@ -49,3 +50,9 @@ async def get_ticker_prices(
 @cache(expire=60 * 5)
 async def get_user_portfolio(token: InvestmentToken = Depends()):
     return await get_user_pf(token.token)
+
+
+@router.get("/interpret_news", response_model=Interpretation)
+@cache(expire=60 * 5)
+async def get_interpretation(news_text: str, sentiment: str, sentiment_score: float, ticker: str):
+    return await get_interp(news_text, sentiment, sentiment_score, ticker)
