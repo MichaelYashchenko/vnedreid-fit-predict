@@ -24,7 +24,8 @@ class NewsDeduplicatorFast:
         return embeddings
 
     def deduplicate(self, items: List[Dict]) -> List[Dict]:
-        descriptions = [item['description'] for item in items]
+        print(items)
+        descriptions = [item['news_summary'] for item in items]
         embeddings = self.embed_batch(descriptions)
 
         similarity_matrix = cosine_similarity(embeddings)
@@ -42,7 +43,7 @@ class NewsDeduplicatorFast:
                     group.append(j)
                     used[j] = True
 
-            best_idx = max(group, key=lambda idx: len(items[idx]['description']))
+            best_idx = max(group, key=lambda idx: len(items[idx]['news_summary']))
             item = items[best_idx].copy()
             item['duplicates'] = len(group) - 1
             result.append(item)
@@ -52,7 +53,6 @@ class NewsDeduplicatorFast:
 from transformers import AutoTokenizer, AutoModel
 
 def deduplicate_news(news):
-    news = news['articles']
     tokenizer = AutoTokenizer.from_pretrained("cointegrated/rubert-tiny")
     model = AutoModel.from_pretrained("cointegrated/rubert-tiny")
     deduplicator = NewsDeduplicatorFast(tokenizer=tokenizer, model=model)

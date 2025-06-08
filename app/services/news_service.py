@@ -129,6 +129,7 @@ class NewsService:
 
     def get_news(
         self,
+        ticker: str,
         keywords: List[str],
         category: Optional[str] = None,
         lang: Optional[str] = None,
@@ -148,27 +149,50 @@ class NewsService:
         }
 
         url = self._build_get_url(query_params)
+
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                data['news_date'] = data['publishedAt']
-                data['news_summary'] = data['description']
-                del data['publishedAt']
-                del data['description']
-                data['source'] = data['source']['name']
-                return data
+                articles = data['articles']
+                articles = preprocess_articles(ticker, articles)
+                return articles
         except Exception as e:
             return {"error": str(e), "url": url}
-
+    def get_news_batch(self, dict_ticker_kws, from_date, to_date):
+        result_news = []
+        for ticker, kws in dict_ticker_kws.items():
+            current_ticker_news = self.get_news(ticker, kws, from_date=from_date, to_date=to_date)
+            result_news.extend(current_ticker_news)
+        return result_news
 
     async def fetch_ticker_news(self, tickers, from_date, to_date):
-        companies = await get_companies_names_by_ticker(tickers)
-        kws = get_key_words(companies)
-        name = companies[0]
-        kws_list = kws[name]
-        kws_list.append(name)
-        news = self.get_news(kws_list, from_date=from_date, to_date=to_date)
+        dict_ticker_kws = dict() # { "GAZP" : ["Газпром", "газ", "природные ресурсы", ... ], "SBER": [ "Герман Греф", "Сбер-тех", "Гигачад"}
+        print(tickers)
+        for ticker in tickers:
+            companies = await get_companies_names_by_ticker([ticker])#await get_companies_names_by_ticker(tickers)
+            kws = get_key_words(companies)
+            name = companies[0]
+            kws_list = kws[name]
+            kws_list.append(name)
+            dict_ticker_kws[ticker] = kws_list
+
+        news = self.get_news_batch(dict_ticker_kws, from_date=from_date, to_date=to_date)
         unique_news = deduplicate_news(news)
         with_relevance = get_news_relevance(unique_news)
         nered_news = ner_news(with_relevance)
         return nered_news
+
+
+def preprocess_articles(ticker, articles_list):
+    for article in articles_list:
+        article['news_date'] = article['publishedAt']
+        article['news_summary'] = article['description']
+        article['source'] = article['source']['name']
+        article['ticker'] = ticker
+        article['news_title'] = article['title']
+        del article['publishedAt']
+        del article['description']
+        del article['title']
+        del article['content']
+        del article['image']
+    return articles_list

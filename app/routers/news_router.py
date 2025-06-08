@@ -29,7 +29,7 @@ async def get_ticker_news(
     date_start: datetime,
     date_end: datetime,
 ):
-    tickers = tickers.split(',')
+    tickers = [ticker.strip() for ticker in tickers.split(",")]
     return await news_service.fetch_ticker_news(tickers, date_start, date_end)
 
 

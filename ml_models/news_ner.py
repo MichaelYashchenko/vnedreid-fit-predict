@@ -76,5 +76,5 @@ def get_result(text, topk=5):
 
 def ner_news(news):
     for new_ind in range(0, len(news)):
-        news[new_ind]['key_words'] = get_result(news[new_ind]['description'])
+        news[new_ind]['key_words'] = get_result(news[new_ind]['news_summary'])
     return news
