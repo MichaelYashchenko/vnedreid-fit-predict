@@ -1,0 +1,72 @@
+/* src/pages/HowItWorksPage.css */
+
+.how-it-works-container {
+    background-color: var(--color-surface);
+    padding: 2rem 2.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    line-height: 1.8;
+  }
+  
+  .how-it-works-container h2 {
+    color: var(--color-primary-yellow);
+    font-size: 2rem;
+    margin-top: 0;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .how-it-works-container .section {
+    margin-bottom: 2rem;
+  }
+  
+  .how-it-works-container h3 {
+    font-size: 1.4rem;
+    color: var(--color-text-primary);
+    margin-bottom: 0.75rem;
+  }
+  
+  .how-it-works-container p {
+    color: var(--color-text-secondary);
+    max-width: 80ch; /* Ограничиваем длину строки для лучшей читаемости */
+  }
+  
+  .how-it-works-container ul {
+    list-style-type: '–  ';
+    padding-left: 20px;
+    color: var(--color-text-secondary);
+  }
+  
+  .how-it-works-container li {
+    padding-left: 10px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .how-it-works-container strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+  
+  .disclaimer-box {
+    margin-top: 2.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #9a3412; /* Оранжевый цвет для привлечения внимания */
+    background-color: #1c1510; /* Темный оранжево-коричневый фон */
+  }
+  
+  .disclaimer-box h3 {
+    color: #fdba74; /* Светло-оранжевый */
+    margin-top: 0;
+  }
+  
+  .disclaimer-box p {
+    color: #fed7aa; /* Более светлый текст для контраста */
+    max-width: 100%;
+  }
+  
+  .disclaimer-box strong {
+    color: #ffedd5;
+    font-weight: 700;
+  }

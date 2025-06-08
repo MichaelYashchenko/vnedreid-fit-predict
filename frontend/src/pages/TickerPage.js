@@ -9,55 +9,67 @@ const TickerPage = () => {
   const [newsData, setNewsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Состояние для "тултипа" - активной новости и ее позиции
   const [activeNews, setActiveNews] = useState({ item: null, position: null });
 
-  const [dateRange, setDateRange] = useState(() => {
+  const getInitialDateRange = () => {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setFullYear(startDate.getFullYear() - 1);
+    startDate.setMonth(startDate.getMonth() - 1);
     return {
       start: startDate.toISOString().split('T')[0],
       end: endDate.toISOString().split('T')[0],
     };
-  });
+  };
+
+  const [dateRange, setDateRange] = useState(getInitialDateRange);
+  const [formDates, setFormDates] = useState(dateRange);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       setActiveNews({ item: null, position: null });
-      const apiUrl = 'http://127.0.0.1:8000';
+      const apiUrl = 'http://127.0.0.1:5000';
       
       try {
         const [pricesResponse, newsResponse] = await Promise.all([
-          fetch(`${apiUrl}/news/get_ticker_prices?ticker=${tickerSymbol}&date_start=${dateRange.start}&date_end=${dateRange.end}`),
-          fetch(`${apiUrl}/news/get_ticker_news?tickers=${tickerSymbol}&date_start=${dateRange.start}&date_end=${dateRange.end}`)
+          fetch(`${apiUrl}/get_ticker_prices?ticker=${tickerSymbol}&date_start=${dateRange.start}&date_end=${dateRange.end}`, { signal }),
+          fetch(`${apiUrl}/get_ticker_news?tickers=${tickerSymbol}&date_start=${dateRange.start}&date_end=${dateRange.end}`, { signal })
         ]);
 
         if (!pricesResponse.ok || !newsResponse.ok) {
           throw new Error('Не удалось загрузить данные. Проверьте работу сервера.');
         }
-
         const prices = await pricesResponse.json();
         const news = await newsResponse.json();
-        
         setPriceData(prices);
         setNewsData(news);
-
-      } catch (err) { // <--- ИСПРАВЛЕНИЕ ЗДЕСЬ
-        setError(err.message);
+      } catch (err) {
+        if (err.name !== 'AbortError') setError(err.message);
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
     fetchData();
+    
+    return () => {
+      controller.abort();
+    };
   }, [tickerSymbol, dateRange]);
 
-  // Обработчики, которые мы передадим в D3-компонент
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    setFormDates(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBuildChart = () => {
+    setDateRange(formDates);
+  };
+
   const handleMarkerHover = (newsItem, pos) => {
-    // Добавляем небольшое смещение, чтобы тултип не перекрывал курсор
     const position = { top: pos.top - 10, left: pos.left + 20 };
     setActiveNews({ item: newsItem, position });
   };
@@ -72,6 +84,15 @@ const TickerPage = () => {
       
       <div className="chart-container">
         <h3>Динамика цены {tickerSymbol}</h3>
+
+        <div className="date-range-controls">
+          <input type="date" name="start" value={formDates.start} onChange={handleDateChange} />
+          <input type="date" name="end" value={formDates.end} onChange={handleDateChange} />
+          <button onClick={handleBuildChart} disabled={loading}>
+            {loading ? 'Загрузка...' : 'Построить'}
+          </button>
+        </div>
+
         {loading && <p className="status-message">Загрузка данных графика...</p>}
         {error && <p className="status-message error-message">{error}</p>}
         {!loading && !error && priceData.length > 0 && (
@@ -87,11 +108,10 @@ const TickerPage = () => {
         )}
       </div>
 
-      {/* Наше "модальное окно" теперь работает как тултип */}
       <NewsModal 
         newsItem={activeNews.item} 
         position={activeNews.position}
-        onClose={handleMarkerLeave} // Закрытие по кнопке или фону тоже убирает тултип
+        onClose={handleMarkerLeave}
       />
     </div>
   );
