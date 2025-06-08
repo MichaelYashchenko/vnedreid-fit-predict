@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends
+from fastapi_cache.decorator import cache
 
 from app.services.schemas.news_response import Article
 from typing import List
@@ -24,6 +25,7 @@ news_service = NewsService(NEWS_API_KEY)
 
 
 @router.get("/get_ticker_news", response_model=List[Article])
+@cache(expire=60 * 5)
 async def get_ticker_news(
     tickers: str,
     date_start: datetime,
@@ -34,6 +36,7 @@ async def get_ticker_news(
 
 
 @router.get("/get_ticker_prices", response_model=List[Tuple[int, float]])
+@cache(expire=60 * 5)
 async def get_ticker_prices(
         ticker: str,
         date_start: datetime,
@@ -43,5 +46,6 @@ async def get_ticker_prices(
 
 
 @router.get("/get_user_portfolio", response_model=List[Ticker])
+@cache(expire=60 * 5)
 async def get_user_portfolio(token: InvestmentToken = Depends()):
     return await get_user_pf(token.token)
