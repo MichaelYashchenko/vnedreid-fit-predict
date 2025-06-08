@@ -15,7 +15,7 @@ from app.services.news_service import (
     get_user_pf,
     get_interpretation as get_interp
 )
-from app.services.schemas import NewsResponse, Ticker, InvestmentToken
+from app.services.schemas import NewsResponse, Ticker, InvestmentToken, InterpretationSchema
 
 load_dotenv('../.env')
 
@@ -52,7 +52,12 @@ async def get_user_portfolio(token: InvestmentToken = Depends()):
     return await get_user_pf(token.token)
 
 
-@router.get("/interpret_news", response_model=Interpretation)
+@router.post("/interpret_news", response_model=Interpretation)
 @cache(expire=60 * 5)
-async def get_interpretation(news_text: str, sentiment: str, sentiment_score: float, ticker: str):
-    return await get_interp(news_text, sentiment, sentiment_score, ticker)
+async def get_interpretation(interpretation: InterpretationSchema = Depends()):
+    return await get_interp(
+        interpretation.news_text,
+        interpretation.sentiment,
+        interpretation.sentiment_score,
+        interpretation.ticker
+    )
