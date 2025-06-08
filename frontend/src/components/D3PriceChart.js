@@ -15,13 +15,14 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
       let minDiff = Infinity;
 
       prices.forEach(p => {
-        const diff = Math.abs(p[0] - newsTimestamp);
+        const diff = Math.abs((p[0] * 1000) - newsTimestamp); // Сравниваем мс с мс
         if (diff < minDiff) {
           minDiff = diff;
           closestPoint = p;
         }
       });
       
+      // chartX по-прежнему в секундах, конвертируем при использовании
       return { ...newsItem, chartX: closestPoint[0], chartY: closestPoint[1] };
     });
   };
@@ -52,9 +53,9 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
     const chart = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
       
-    // Определяем оси
+    // Определяем оси, конвертируя секунды в мс для домена
     const xScale = d3.scaleTime()
-      .domain(d3.extent(prices, d => d[0]))
+      .domain(d3.extent(prices, d => d[0] * 1000))
       .range([0, width]);
       
     const yScale = d3.scaleLinear()
@@ -62,13 +63,15 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
       .range([height, 0]);
       
     // Рисуем оси
-    const xAxis = d3.axisBottom(xScale).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat("%b '%y"));
+    const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%d.%m.%Y"));
     chart.append("g")
       .attr("class", "axis-x")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis)
       .selectAll("text")
-        .style("fill", "#A6A6A6");
+        .style("fill", "#A6A6A6")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end");
         
     const yAxis = d3.axisLeft(yScale).tickFormat(d => `₽${d.toFixed(2)}`);
     chart.append("g")
@@ -81,9 +84,9 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
     chart.selectAll(".domain").attr("stroke", "#404040");
     chart.selectAll(".tick line").attr("stroke", "#404040");
 
-    // Рисуем линию цены
+    // Рисуем линию цены, конвертируя секунды в мс
     const lineGenerator = d3.line()
-      .x(d => xScale(d[0]))
+      .x(d => xScale(d[0] * 1000))
       .y(d => yScale(d[1]))
       .curve(d3.curveMonotoneX);
       
@@ -102,11 +105,10 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
       .enter()
       .append("g")
       .attr("class", "news-marker-group")
-      .attr("transform", d => `translate(${xScale(d.chartX)}, ${yScale(d.chartY)})`)
+      // Конвертируем секунды в мс при позиционировании
+      .attr("transform", d => `translate(${xScale(d.chartX * 1000)}, ${yScale(d.chartY)})`)
       .on('mouseenter', (event, d) => {
-        // Увеличиваем маркер при наведении для лучшего UX
         d3.select(event.currentTarget).select('text').transition().duration(200).attr('font-size', '24px');
-        // Передаем новость и позицию курсора наверх
         onMarkerHover(d, { top: event.pageY, left: event.pageX });
       })
       .on('mouseleave', (event, d) => {
@@ -116,7 +118,6 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
       .each(function(d) {
         const g = d3.select(this);
 
-        // Вертикальная пунктирная линия
         g.append('line')
           .attr('x1', 0)
           .attr('y1', 0)
@@ -126,13 +127,12 @@ const D3PriceChart = ({ prices, news, onMarkerHover, onMarkerLeave }) => {
           .attr('stroke-width', 1)
           .attr('stroke-dasharray', '3,3');
         
-        // Сам маркер-колокольчик
         g.append('text')
           .attr('text-anchor', 'middle')
-          .attr('y', -10) // Смещаем чуть выше линии графика
+          .attr('y', -10)
           .attr('font-size', '18px')
           .style('cursor', 'pointer')
-          .style('fill', '#FFDD2D') // Делаем его более заметным
+          .style('fill', '#FFDD2D')
           .text('🔔');
       });
 
