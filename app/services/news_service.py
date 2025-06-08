@@ -83,7 +83,7 @@ async def get_ticker_prices(ticker, start_time, end_time, token=TOKEN, regime=IN
             candles.append(candle)
         if not candles:
             return [[]]
-    times = [candle.time for candle in candles]
+    times = [int(candle.time.timestamp()) for candle in candles]
     prices = [quotation_to_float(candle.close) for candle in candles]
     return list(zip(times, prices))
 
@@ -183,12 +183,13 @@ class NewsService:
 
 
 def preprocess_articles(ticker, articles_list):
-    for article in articles_list:
+    for _id, article in enumerate(articles_list):
         article['news_date'] = article['publishedAt']
         article['news_summary'] = article['description']
         article['source'] = article['source']['name']
         article['ticker'] = ticker
         article['news_title'] = article['title']
+        article['id'] = _id
         del article['publishedAt']
         del article['description']
         del article['title']

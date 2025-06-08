@@ -33,7 +33,7 @@ async def get_ticker_news(
     return await news_service.fetch_ticker_news(tickers, date_start, date_end)
 
 
-@router.get("/get_ticker_prices", response_model=List[Tuple[datetime, float]])
+@router.get("/get_ticker_prices", response_model=List[Tuple[int, float]])
 async def get_ticker_prices(
         ticker: str,
         date_start: datetime,

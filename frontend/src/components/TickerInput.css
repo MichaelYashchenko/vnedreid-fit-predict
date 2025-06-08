@@ -1,0 +1,11 @@
+.ticker-input-container { display: flex; flex-direction: column; gap: 12px; }
+.ticker-input-container label { font-weight: 500; font-size: 0.9rem; color: var(--color-text-secondary); }
+.input-area { display: flex; }
+.input-area input { flex-grow: 1; padding: 8px 12px; background-color: var(--color-black); border: 1px solid var(--color-border); color: var(--color-text-primary); border-radius: 4px 0 0 4px; outline: none; }
+.input-area input:focus { border-color: var(--color-primary-yellow); }
+.input-area button { padding: 8px 16px; border: 1px solid var(--color-primary-yellow); background-color: var(--color-primary-yellow); color: var(--color-black); font-weight: 700; cursor: pointer; border-radius: 0 4px 4px 0; border-left: none; transition: background-color 0.2s ease; }
+.input-area button:hover { background-color: #e6c200; border-color: #e6c200; }
+.ticker-tags { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.ticker-tag { display: flex; align-items: center; background-color: var(--color-black); border: 1px solid var(--color-border); padding: 5px 10px; border-radius: 15px; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+.remove-tag-btn { background: none; border: none; color: var(--color-text-secondary); margin-left: 8px; cursor: pointer; font-size: 18px; line-height: 1; padding: 0; transition: color 0.2s ease; }
+.remove-tag-btn:hover { color: var(--color-primary-yellow); }

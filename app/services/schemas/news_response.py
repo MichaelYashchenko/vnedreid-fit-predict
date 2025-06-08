@@ -19,8 +19,8 @@ class Article(BaseModel):
     key_words: List[str] = []
 
     id: Optional[int] = None
-    content: Optional[str] = None
-    image: Optional[HttpUrl] = None
+    # content: Optional[str] = None
+    # image: Optional[HttpUrl] = None
     news_tags: List[str] = []
 
 class NewsResponse(BaseModel):

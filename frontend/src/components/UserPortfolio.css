@@ -1,0 +1,105 @@
+/* src/components/UserPortfolio.css */
+
+.user-portfolio-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .user-portfolio-container h4 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+  
+  /* --- НАЧАЛО НОВОГО КОДА --- */
+  .portfolio-input-area {
+    display: flex;
+  }
+  
+  .portfolio-input-area input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    background-color: var(--color-black);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    border-radius: 4px 0 0 4px;
+    outline: none;
+    font-size: 0.9rem;
+  }
+  
+  .portfolio-input-area input:focus {
+    border-color: var(--color-primary-yellow);
+  }
+  
+  .portfolio-input-area input:disabled {
+    background-color: var(--color-surface);
+  }
+  
+  
+  .portfolio-input-area button {
+    padding: 8px 16px;
+    border: 1px solid var(--color-primary-yellow);
+    background-color: var(--color-primary-yellow);
+    color: var(--color-black);
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+    border-left: none;
+    transition: background-color 0.2s ease;
+  }
+  
+  .portfolio-input-area button:hover:not(:disabled) {
+    background-color: #e6c200;
+    border-color: #e6c200;
+  }
+  
+  .portfolio-input-area button:disabled {
+    background-color: var(--color-border);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+  }
+  /* --- КОНЕЦ НОВОГО КОДА --- */
+  
+  
+  .portfolio-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .portfolio-tag {
+    background-color: var(--color-black);
+    color: var(--color-primary-yellow);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--color-primary-yellow);
+    transition: all 0.2s ease;
+  }
+  
+  .portfolio-tag:hover:not(:disabled) {
+    background-color: var(--color-primary-yellow);
+    color: var(--color-black);
+  }
+  
+  .portfolio-tag:disabled {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  .status-message-small {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      margin-top: 4px; /* Небольшой отступ сверху */
+  }
+  
+  .error-message-small {
+      color: #f87171;
+  }
